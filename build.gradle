@@ -1,10 +1,10 @@
-group 'at.jku.ce'
-version '1.0-SNAPSHOT'
+group 'at.meroff.ce.ue'
+version '1.0'
 
 apply plugin: 'idea'
 apply plugin: 'java'
 
-sourceCompatibility = 1.5
+sourceCompatibility = 1.8
 
 idea {
     module {
@@ -14,6 +14,32 @@ idea {
 
 repositories {
     mavenCentral()
+}
+
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+shadowJar {
+    archiveName = "server.jar"
+    manifest {
+        attributes 'Implementation-Title': 'CEBay Seeder Actor',
+                'Implementation-Version': version,
+                'Main-Class': 'at.meroff.ce.ue.server.ServerApp'
+
+    }
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer) {
+        resource = 'reference.conf'
+    }
 }
 
 dependencies {
