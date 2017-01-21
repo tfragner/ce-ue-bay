@@ -7,6 +7,7 @@ import at.jku.ce.bay.api.FilesFound;
 import at.jku.ce.bay.api.GetFile;
 import at.jku.ce.bay.api.GetFileNames;
 import at.jku.ce.bay.utils.CEBayHelper;
+import at.meroff.ce.ue.api.UploadFile;
 import com.typesafe.config.ConfigFactory;
 import org.jboss.netty.channel.ChannelException;
 import scala.concurrent.Await;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Created by fragner on 14.01.17.
+ * Client für die CEBay
  */
 public class ClientApp {
 
@@ -159,7 +161,7 @@ public class ClientApp {
      */
     private void commandLineInterface() {
 
-        System.out.print("print list [p] | get status [s] | exit[x]: ");
+        System.out.print("print list [p] | get status [s] | upload [u] | exit[x]: ");
         String input = cmdInput.next();
 
         while (!input.equals("x")) {
@@ -167,15 +169,37 @@ public class ClientApp {
                 printFileList();
             } else if (input.equals("s")) {
                 showStatus();
+            } else if (input.equals("u")) {
+                uploadFile();
             }
 
-            System.out.print("print list [p] | get status [s] | exit[x]: ");
+            System.out.print("print list [p] | get status [s] | upload [u] | exit[x]: ");
             input = cmdInput.next();
         }
 
         // Stoppen des Actor Systems
         stopActorSystem();
 
+    }
+
+    private void uploadFile() {
+        System.out.print("Dateipfad eingeben:");
+        String input = cmdInput.next();
+
+        Path filePath = Paths.get(input);
+        try {
+            byte[] data = Files.readAllBytes(filePath);
+            String filename = filePath.toFile().getName();
+            String mySeeder = "akka.tcp://seeder139System@140.78.196.52:2552/user/manage139Actor";
+            ActorSelection mySeederSel = clientActorSystem.actorSelection(mySeeder);
+            Timeout timeout = new Timeout(Duration.create(30, "seconds"));
+            Future<Object> ask = Patterns.ask(mySeederSel, new UploadFile(filename,data),timeout);
+            Object ret = Await.result(ask,timeout.duration());
+        } catch (IOException e) {
+            System.out.println("Datei konnte nicht gelesen werden!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
