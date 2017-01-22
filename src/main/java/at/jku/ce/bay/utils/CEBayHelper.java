@@ -12,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class CEBayHelper {
 
-  private static String SYS_NAME = "client139System";
+//  private static String SYS_NAME = "server139System";
 //  private static String SYS_HOST = "91.119.52.245";
   private static String SYS_HOST = "140.78.196.52";
   private static int SYS_PORT = 2552;
