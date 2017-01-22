@@ -1,10 +1,11 @@
-group 'at.jku.ce'
-version '1.0-SNAPSHOT'
+group 'at.meroff.ce.ue'
+version '1.0'
 
 apply plugin: 'idea'
 apply plugin: 'java'
+apply plugin: 'gradle-one-jar'
 
-sourceCompatibility = 1.5
+sourceCompatibility = 1.8
 
 idea {
     module {
@@ -15,6 +16,49 @@ idea {
 repositories {
     mavenCentral()
 }
+
+
+buildscript {
+    repositories {
+//        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+//        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+        classpath 'com.github.rholder:gradle-one-jar:1.0.4'
+    }
+}
+
+//apply plugin: 'com.github.johnrengelman.shadow'
+
+task packServer(type: OneJar) {
+
+    mainClass = 'at.meroff.ce.ue.server.ServerApp'
+
+    archiveName = 'cebay-server-' + version + '.pkg.jar'
+
+}
+
+task packClient(type: OneJar) {
+
+    mainClass = 'at.meroff.ce.ue.client.ClientApp'
+
+    archiveName = 'cebay-client-' + version + '.pkg.jar'
+
+}
+
+//shadowJar {
+//    archiveName = "server.jar"
+//    manifest {
+//        attributes 'Implementation-Title': 'CEBay Seeder Actor',
+//                'Implementation-Version': version,
+//                'Main-Class': 'at.meroff.ce.ue.server.ServerApp'
+//
+//    }
+//    transform(com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer) {
+//        resource = 'reference.conf'
+//    }
+//}
 
 dependencies {
     compile group: 'com.typesafe.akka', name: 'akka-actor_2.11', version: '2.4.14'

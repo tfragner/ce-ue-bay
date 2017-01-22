@@ -1,0 +1,174 @@
+#+TITLE: Communications Engineering UE
+#+SUBTITLE: CEBay Seeder und Client - Vorgehen
+#+AUTHOR: Thomas Fragner (1455954), Sandra Pühringer (1456472)
+#+EMAIL: fragner@bitter.at, spuehrin@gmail.com
+#+LANGUAGE: de
+# #+OPTIONS: ':t toc:nil ^:nil _:nil
+
+# #+LATEX_CLASS: org-article
+# #+LaTeX_CLASS_OPTIONS: [9pt,a4paper,notitlepage,notoc]
+#+LaTeX_CLASS_OPTION: [titlepage]
+#+LaTeX_HEADER: \usepackage[left=2cm,right=2cm,top=1.5cm,bottom=1.5cm,marginpar=0cm, includeall]{geometry}
+#+LATEX_HEADER: \usepackage{lmodern}
+#+LATEX_HEADER: \usepackage[]{babel}
+#+LATEX_HEADER: \usepackage{eurosym}
+#+LATEX_HEADER: \setlength{\parindent}{0pt}
+
+#+LATEX_HEADER: \usepackage{blindtext,lastpage,scrpage2}
+
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \pagestyle{scrheadings}
+
+#+LATEX_HEADER: \chead{Thomas Fragner (1455954), Sandra Pühringer (1456472)}
+#+LATEX_HEADER: \cfoot{\thepage{} von \pageref{LastPage}}
+
+#+LATEX_HEADER: \RequirePackage{fancyvrb}
+#+LATEX_HEADER: \DefineVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\scriptsize}
+
+# #+TOC: headlines 2
+#+LATEX: \newpage
+* Server (Seeder)
+Der Server stellt Daten bereit. Diese registriert der Server am
+Registry Server der CEBay. Der Server ist aus mehreren Komponenten
+zusammengestellt:
+- ServerApp :: ist die eigentliche Application. Sie dient als Command
+     Line Frontend für den Server. Das Actor System wird von der
+     ServerApp erstellt. Weiters startet die Application enen Actor
+     vom Typ ActorSeederManager.
+- ActorSeederManager :: Dieser Actor verwaltet die bereitzustellenden
+     Dateien und erstellt für jede Datei einen Actor ActorSeeder.
+- ActorSeeder :: Bearbeitet Downloadanfragen für eine Datei
+
+#+CAPTION: Klassenstruktur Server
+#+ATTR_LATEX: :width .7\textwidth :float nil
+[[file:diagram_server.png]]
+
+** ServerApp
+Die Klasse ServerApp stellt einen ausführbares Programm zur
+Verfügung. Beim Starten erzeugt es ein Actorsystem und startet einen
+Actor ActorSeederManager. Diesem Actor kann beim Erstellen ein Pfad zu
+einem Verzeichnis übergeben werden, in dem die bereitzustellenden
+Dateien gesucht werden. Nach dem Start des Actors wird ein Command
+Line Interface angeboten. Dieses bietet die Möglichkeit eine
+Statusabfrage zu allen bereitgestellen Dateien abzurufen.
+
+** ActorSeederManager
+Die Klasse ActorSeederManager stellt einen Actor zur Verfügung. Dieser
+Actor verwaltet alle bereitzustellenden Dateien. Der Actor bearbeitet
+die folgenden Nachrichten:
+
+- Initialize :: Mit dieser Nachricht wird der Manager
+     initialisiert. In der Nachricht ist der Pfad zum Verzeichnis mit
+     den bereitzustellenden Dateien enthalten. Im Zuge der
+     Initialisierung werden alle Dateien die sich in diesem
+     Verzeichnis befinden bei der CEBay Registry registriert. Für jede
+     gefundene Datei sendet der Actor eine Nachricht vom Typ SeederFile an
+     sich selbst.
+- SeederFile :: Wenn eine Nachricht vom Typ SeederFile erhalten wird,
+     dann erzeugt der Actor einen neuen Kind-Actor vom Typ
+     ActorSeeder. Die Instanz von SeederFile wird um die ActorRef des
+     erstellten Actors erweitert. Anschließend wird diese Instanz von
+     SeederFile an den neuen Actor gesendet. Zusätzlich wird die
+     Erstellung des neuen Aktors in einer HashMap gepseichert.
+- SeederGetStatus :: Beim Eintreffen dieser Nachricht wird die HashMap
+     mit den Status der bereitgestellten Dateien in Form einer
+     Nachricht vom Typ SeederStatusRetrieved an den Sender zurückgesendet.
+- UploadFile :: Diese Nachricht enhält Daten für eine neue Datei. Beim
+     Erhalt der Nachricht wird das in der Nachricht enthaltene Byte
+     Array in das Datenverzeichnis gespeichert. Der Dateiname der
+     neuen Datei ist ebenfalls in der Nachricht enthalten.
+
+** ActorSeeder
+Die Klasse ActorSeeder stellt den eigentlichen Seeder zur
+Verfügung. Hauptaufgaben des Actors sind:
+- die Registrierung an der CEBay
+- Downloadanfragen bearbeiten
+- Statusabfragen beantworten
+
+Folgende Nachrichten werden von Actor bearbeitet:
+- SeederFile :: Beim Erhalt einer Nachricht vom Typ SeederFile wird
+     die entsprechende Dateie bei der CEBay registriert. Dabei wird
+     eine Nachricht vom Typ Publish mit dem Dateinamen, dem Hashwert
+     der Datei und der ActorRef als String gesendet.
+- GetFile :: Bei einer Nachricht des Typs GetFile wird die vom Client
+     angefrage Datei in eine Nachricht vom Typ FileRetrieved
+     verpackt. und an den Sender als Antwort zurückgeschickt. Sollte
+     die angefragte Datei nicht mir der Datei des Actors überenstimmen
+     wird eine Nachricht FileNotFound gesendet.
+- GetStatus :: Bei einer Statusanfrage durch die CEBay oder einen
+     Client wird eine Nachricht vom Typ StatusRetrieved zurückgesendet.
+#+LATEX: \newpage
+* Client
+
+** ClientApp
+Die Klasse ClientApp stellt ein ausführbares Programm zur
+Verfügung. Die folgenden Funktionalitäten werden vom Programm
+bereitgestellt:
+- Erstellen eines Actor Systems
+- Erstellen des Downloadmanagers
+- Abrufen der Dateiliste von der CEBay
+- Download einer gewählten Datei
+- Download aller verfügbaren Dateien
+- Status der Downloads
+- Upload einer neuen Datei
+
+#+CAPTION: Klassenstruktur Client
+#+ATTR_LATEX: :width .9\textwidth :float nil
+[[file:diagram_client.png]]
+
+Beim Abrufen der Dateiliste wird eine Nachricht vom Typ GetFileNames
+an die CEBay gesendet. Als Antwort kommt eine Liste mit verfügbaren
+Dateien zurück. Aus dieser Liste kann der Benutzer eine Datei
+auswählen, die heruntergeladen werden soll. Der Dateiname wird
+anschließend an den ActorClientManager übergeben. Weiter kann ein
+Upload gestartet werden. Dazu wird eine Nachricht vom Typ UploadFile
+an einen Seeder gesendet.
+** ActorClientManager
+Die Klasse ActorClientManager stellt einen Actor zur Verfügung. Dieser
+Actor verwaltet alle Downloads. Der Actor bearbeitet die folgenden
+Nachrichten:
+
+- Initialize :: Das Downloadverzeichnis wird festgelegt.
+- GetFile :: Bei einer Anfrage des Client Programms vom Typ GetFile
+     wird ein neuer Actor vom Typ ActorDownloader erstellt. Die
+     erhaltene Nachricht wird an diesen Actor weitergeleitet.
+- downloaderGetStatus :: Bei Erhalt dieser Nachricht wird der Status
+     der Downloads zurückgesendet.
+- UpdateStatus :: Actor vom Typ ActorDownloader können diese Nachricht
+     senden um den aktuellen Status bekanntzugeben. Wenn der Status
+     "failure" ist wird der entsprechende ActorDownloader beendet.
+** ActorDownloader
+Die Klasse ActorDownloader wickelt genau einen bestimmten Download
+ab. Dazu werden folgenden Nachrichten verwendet:
+- GetFile :: Diese Nachricht weist den Actor an eine bestimmte Datei
+     herunterzuladen. Im ersten Schritt werden die verfügbaren Seeder
+     für die Datei bei der CEBay nachgefragt.
+- SeederFound :: Bei einer Antwort von der CEBay mit einer Nachricht
+     vom Typ SeederFound wird an alle Seeder eine Nachricht vom Typ
+     GetStatus gesendet. Damit soll festgestellt werden welche Seeder
+     tatsächlich verfügbar sind. Es wird eine Antwort vom Typ
+     StatusRetrieved erwartet.
+- StatusRetrieved :: Sobald sich ein möglicher Seeder meldet, werden
+     keine weiteren Meldung vom Typ StatusRetrieved mehr akzeptiert
+     und es wird eine Nachricht vom Typ GetFile an den entsprechenden
+     Seeder gesendet. Weiters wird eine Nachricht an den Download
+     Manager geschickt, dass der Download begonnen hat.
+- FileRetrieved :: Sobald der Seeder eine Nachricht vom Typ
+     FileRetrieved zurücksendet wird diese Nachricht verarbeitet und
+     die enthaltene Datei im Downloadverzeichnis abgespeichert. Danach
+     wird eine Nachricht an den Download Manager gesendet, dass der
+     Download fertig ist.
+- FileNotFound :: Wenn diese Nachricht eintrifft wird eine Meldung an
+     den Download Manager gesendet um bekanntzugeben, dass der
+     Download nicht funktioniert.
+
+Weiter gibt es einen internen Timer. Wenn nach 90 Sekunden kein
+Seeder gefunden wurde wird ebenfalls ein Fehlschlag an den Download
+Manager gemeldet. Dies führt dann zum Beenden des Actors.
+
+#+LATEX: \newpage
+* Sequenz Diagramm
+#+CAPTION: Sequenz Diagramm
+#+ATTR_LATEX: :height .9\textheight :float nil
+[[file:sequence_diagram.png]]
+
