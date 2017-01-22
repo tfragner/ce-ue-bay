@@ -189,9 +189,9 @@ public class ServerApp {
      */
     private void showStatus() {
         try {
-            Future<Object> ask = Patterns.ask(manager, new ActorSeederManager.seederGetStatus(), DEFAULT_TIMEOUT);
+            Future<Object> ask = Patterns.ask(manager, new ActorSeederManager.SeederGetStatus(), DEFAULT_TIMEOUT);
             Object ret = Await.result(ask, DEFAULT_TIMEOUT.duration());
-            if (ret instanceof ActorSeederManager.seederStatusRetrieved) {
+            if (ret instanceof ActorSeederManager.SeederStatusRetrieved) {
                 System.out.println(ret.toString());
             }
         } catch (TimeoutException e) {

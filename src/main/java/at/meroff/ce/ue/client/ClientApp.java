@@ -259,9 +259,9 @@ public class ClientApp {
      */
     private void showStatus() {
         try {
-            Future<Object> ask = Patterns.ask(manager, new ActorClientManager.downloaderGetStatus(), DEFAULT_TIMEOUT);
+            Future<Object> ask = Patterns.ask(manager, new ActorClientManager.DownloaderGetStatus(), DEFAULT_TIMEOUT);
             Object ret = Await.result(ask, DEFAULT_TIMEOUT.duration());
-            if (ret instanceof ActorClientManager.downloaderStatusRetrieved) {
+            if (ret instanceof ActorClientManager.DownloaderStatusRetrieved) {
                 System.out.println(ret.toString());
             }
         } catch (TimeoutException e) {

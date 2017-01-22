@@ -2,7 +2,6 @@ package at.meroff.ce.ue.client;
 
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
-import akka.actor.Props;
 import akka.actor.UntypedActor;
 import at.jku.ce.bay.api.GetFile;
 
@@ -47,13 +46,13 @@ public class ActorClientManager extends UntypedActor {
     /**
      * NAchricht zum Abrufen des Status
      */
-    public static class downloaderGetStatus{}
+    public static class DownloaderGetStatus {}
 
 
     /**
      * Nachricht wird als Antwort auf eine Statusabfrage gesendet.
      */
-    public static class downloaderStatusRetrieved{
+    public static class DownloaderStatusRetrieved {
         /**
          * HashMap mit Downloads und detaillierten Informationen
          */
@@ -63,7 +62,7 @@ public class ActorClientManager extends UntypedActor {
          * Standard Konstruktur für die Nachricht.
          * @param status HashMap mit Dateiname und zugehöriger Actor Ref
          */
-        public downloaderStatusRetrieved(HashMap<ActorRef,HashMap<String,String>> status) {
+        public DownloaderStatusRetrieved(HashMap<ActorRef,HashMap<String,String>> status) {
             this.status = status;
         }
 
@@ -143,9 +142,9 @@ public class ActorClientManager extends UntypedActor {
                 downloadList.get(downloader).put("filename", filename);
                 downloadList.get(downloader).put("status", "waiting");
             }
-        } else if (message instanceof downloaderGetStatus) {
+        } else if (message instanceof DownloaderGetStatus) {
             // Info zu allen Downloads
-            getSender().tell(new downloaderStatusRetrieved(downloadList),getSelf());
+            getSender().tell(new DownloaderStatusRetrieved(downloadList),getSelf());
         } else if (message instanceof UpdateStatus) {
             // Update von Seedern
             downloadList.get(getSender()).replace("status",((UpdateStatus) message).getStatus());
@@ -153,6 +152,8 @@ public class ActorClientManager extends UntypedActor {
                     ((UpdateStatus) message).getStatus().equals("failed")) {
                 getSender().tell(PoisonPill.getInstance(),getSelf());
             }
+        } else {
+            unhandled(message);
         }
 
     }

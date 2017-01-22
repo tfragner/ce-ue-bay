@@ -57,12 +57,12 @@ public class ActorSeederManager extends UntypedActor {
     /**
      * Nachricht zum Abrufen des Status
      */
-    public static class seederGetStatus{}
+    public static class SeederGetStatus {}
 
     /**
      * Nachricht wird als Antwort auf eine Statusabfrage gesendet.
      */
-    public static class seederStatusRetrieved{
+    public static class SeederStatusRetrieved {
         /**
          * HashMap mit Status der Seeder
          */
@@ -72,7 +72,7 @@ public class ActorSeederManager extends UntypedActor {
          * Standard Konstruktur für die Nachricht.
          * @param status HashMap mit Dateiname und zugehöriger Actor Ref
          */
-        seederStatusRetrieved(HashMap<String, SeederFile> status) {
+        SeederStatusRetrieved(HashMap<String, SeederFile> status) {
             this.status = status;
         }
 
@@ -139,8 +139,8 @@ public class ActorSeederManager extends UntypedActor {
             ((SeederFile) message).setSeederRef(CEBayHelper.GetRemoteActorRef(seeder));
             files.put(((SeederFile) message).getFilename(), (SeederFile) message);
             seeder.tell(message, getSelf());
-        } else if (message instanceof seederGetStatus) {
-            getSender().tell(new seederStatusRetrieved(files),getSelf());
+        } else if (message instanceof SeederGetStatus) {
+            getSender().tell(new SeederStatusRetrieved(files),getSelf());
         }
     }
 }

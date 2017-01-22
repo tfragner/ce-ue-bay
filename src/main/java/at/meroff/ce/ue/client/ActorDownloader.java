@@ -106,6 +106,8 @@ public class ActorDownloader extends UntypedActor {
             getContext().parent().tell(new ActorClientManager.UpdateStatus("finished"),getSelf());
         }  else if (message instanceof FileNotFound || (message.equals("tick") && !foundSeeder)) {
             getContext().parent().tell(new ActorClientManager.UpdateStatus("failed"), getSelf());
+        } else {
+            unhandled(message);
         }
     }
 }
