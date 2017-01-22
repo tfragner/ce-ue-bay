@@ -2,4 +2,5 @@ at.jku.ce.bay.utils
 at.meroff.ce.ue.api
 at.meroff.ce.ue.client
 at.meroff.ce.ue.helper
+at.meroff.ce.ue.minitest
 at.meroff.ce.ue.server
